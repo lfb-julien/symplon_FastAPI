@@ -82,7 +82,7 @@ async def top_transaction_10(city: str = Query(...)):
     try:
         with sqlite3.connect(r"chinook.db") as con:
             cur = con.cursor()
-            res = cur.execute(f"SELECT id_transaction FROM transactions_sample WHERE ville = '{city}' ORDER BY date_transaction DESC LIMIT 10")
+            res = cur.execute(f"SELECT id_transaction FROM transactions_sample WHERE ville = '{city}' % ORDER BY date_transaction DESC LIMIT 10")
             results = res.fetchall()
             if not results:
                 raise HTTPException(status_code=404, detail="Pas de résultat trouvé")
