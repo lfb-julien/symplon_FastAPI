@@ -1,4 +1,4 @@
-# Description du Code
+# Description du programme
 
 Ce projet est une API FastAPI qui fournit divers endpoints pour accéder et analyser des données immobilières stockées dans une base de données SQLite. Chaque endpoint répond à une user story spécifique, permettant aux utilisateurs d'obtenir des informations telles que le revenu fiscal moyen des foyers, les transactions immobilières récentes, le nombre d'acquisitions, etc.
 
