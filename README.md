@@ -14,7 +14,7 @@ Le code est organisé de la manière suivante :
 
 - **Exécution de l'Application :** L'application est exécutée avec uvicorn.
 
-"""python
+"""bash
 Explication du code point par point
 
 @app.get("/revenu_fiscal_moyen/", description="1. Obtenir le revenu fiscal moyen des foyers d'une ville pour une année donnée.")
