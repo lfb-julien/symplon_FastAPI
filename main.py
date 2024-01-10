@@ -244,7 +244,7 @@ async def top_10_villes_prix_m2_haut():
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-# Exécuter l'application avec uvicorn
+# Exécuter l'application avec uvicorn (uniquement si ce n'est pas charger en tant que module)
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="127.0.0.1", port=8000)
