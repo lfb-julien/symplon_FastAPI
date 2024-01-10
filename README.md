@@ -14,26 +14,35 @@ Le code est organisé de la manière suivante :
 
 - **Exécution de l'Application :** L'application est exécutée avec uvicorn.
 
-```python
-Explication du code point par point
 
+Explication du code point par point
+```python
+```
+
+```python
 @app.get("/revenu_fiscal_moyen/", description="1. Obtenir le revenu fiscal moyen des foyers d'une ville pour une année donnée.")
+```
+
  Dans le code FastAPI, @app.get est utilisé pour définir un endpoint dans une application FastAPI.
  On indique ensuite l'url cible(relatif) et une description
 
- async def revenu_fiscal_moyen(year: int = Query(...), city: str = Query(...)):
+```python
+async def revenu_fiscal_moyen(year: int = Query(...), city: str = Query(...)):
+```
+ 
  pour rappel def permet de dire qu'on va crée une fonction. Pour async: Il est utilisé pour définir des fonctions asynchrones. 
 Les fonctions asynchrones, également appelées coroutines, permettent l'exécution de plusieurs tâches de manière 
 concurrente sans bloquer le programme principal. En gros par exemple une tache qu'on veut exacuté sois même apres execution du programme
 via un click sur un bouton
 
-
+```python
   try:
         with sqlite3.connect(r"chinook.db") as con:
             cur = con.cursor()
             res = cur.execute(f"SELECT revenu_fiscal_moyen FROM foyers_fiscaux WHERE date = {year} AND ville = '{city}'")
             result = res.fetchone()
-
+```
+ 
 On crée une condition pour testé si on trouve la donnée via notre requette.
 on dit avec quoi on se connecte et a quoi
 on crée le curseur 
@@ -50,14 +59,21 @@ pour éviter une utilisation excessive de la mémoire.
 
 Pour faire plus simple c'est pour dire si on veut une liste ou pas....
 
-
- if result is None:
+```python
+if result is None:
                 raise HTTPException(status_code=404, detail="Pas de résultat trouvé")
+```
+
+
 si il y a pas de resultat car pas de donnée trouvé on affiche pas de résultat trouvé
 
+```python
 else:
                 return {"revenu_fiscal_moyen": result[0]}
+```
+
 et si non on affiche le resultat
+
 
 petite précision:
 
@@ -71,7 +87,6 @@ Dans le contexte du code FastAPI, le bloc except Exception as e: est utilisé po
  qui pourrait se produire lors de l'exécution du code à l'intérieur du bloc try. Ensuite, il utilise FastAPI 
  pour lever une exception HTTP (HTTPException) avec un code d'état 500 (Erreur interne du serveur) 
  et le détail de l'exception en tant que message.
-"""
 
 # Utilisation de l'API
 
@@ -82,4 +97,4 @@ pip install -r requirements.txt
 uvicorn main:app --reload
 
 ```
-Readme by ChatGPT
+Readme by moi et chatgpt
