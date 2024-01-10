@@ -15,7 +15,7 @@ Le code est organisé de la manière suivante :
 - **Exécution de l'Application :** L'application est exécutée avec uvicorn.
 
 
-Explication du code point par point
+Explication du code partie endpoint:
 ```python
 ```
 
