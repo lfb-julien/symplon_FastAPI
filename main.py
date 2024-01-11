@@ -9,7 +9,8 @@ async def revenu_fiscal_moyen(year: int = Query(...), city: str = Query(...)):
     try:
         with sqlite3.connect(r"chinook.db") as con:
             cur = con.cursor()
-            res = cur.execute(f"SELECT revenu_fiscal_moyen FROM foyers_fiscaux WHERE date = {year} AND ville = '{city}'")
+            query = "SELECT revenu_fiscal_moyen FROM foyers_fiscaux WHERE date = ? AND ville = ?"
+            res = cur.execute(query, (year, city))
             result = res.fetchone()
             if result is None:
                 raise HTTPException(status_code=404, detail="Pas de résultat trouvé")
@@ -24,7 +25,8 @@ async def top_transaction_10(city: str = Query(...)):
     try:
         with sqlite3.connect(r"chinook.db") as con:
             cur = con.cursor()
-            res = cur.execute(f"SELECT id_transaction FROM transactions_sample WHERE ville = '{city}' % ORDER BY date_transaction DESC LIMIT 10")
+            query = "SELECT id_transaction FROM transactions_sample WHERE ville = ? ORDER BY date_transaction DESC LIMIT 10"
+            res = cur.execute(query, (city,))
             results = res.fetchall()
             if not results:
                 raise HTTPException(status_code=404, detail="Pas de résultat trouvé")
@@ -39,7 +41,8 @@ async def nb_acquisitions_city(city: str = Query(...), year: int = Query(...)):
     try:
         with sqlite3.connect(r"chinook.db") as con:
             cur = con.cursor()
-            res = cur.execute(f"SELECT COUNT(id_transaction) FROM transactions_sample WHERE ville = '{city}' AND date_transaction LIKE '{year}%'")
+            query = "SELECT COUNT(id_transaction) FROM transactions_sample WHERE ville = ? AND date_transaction LIKE ?"
+            res = cur.execute(query, (city, f"{year}%"))
             result = res.fetchone()
             if result is None:
                 raise HTTPException(status_code=404, detail="Pas de résultat trouvé")
@@ -54,7 +57,8 @@ async def repartition_appartement(year: int = Query(...), city: str = Query(...)
     try:
         with sqlite3.connect(r"chinook.db") as con:
             cur = con.cursor()
-            res = cur.execute(f"SELECT n_pieces, COUNT(*) AS nombre_appartements FROM transactions_sample WHERE ville = '{city}' AND date_transaction LIKE '{year}%' AND type_batiment = 'appartement' GROUP BY n_pieces")
+            query = "SELECT n_pieces, COUNT(*) AS nombre_appartements FROM transactions_sample WHERE ville = ? AND date_transaction LIKE ? AND type_batiment = 'appartement' GROUP BY n_pieces"
+            res = cur.execute(query, (city, f"{year}%"))
             results = res.fetchall()
             if not results:
                 raise HTTPException(status_code=404, detail="Pas de résultat trouvé")
@@ -69,7 +73,8 @@ async def acquisitions_studio(year: int = Query(...), city: str = Query(...)):
     try:
         with sqlite3.connect(r"chinook.db") as con:
             cur = con.cursor()
-            res = cur.execute(f"SELECT COUNT(*) AS nombre_acquisitions_studios FROM transactions_sample WHERE ville = '{city}' AND date_transaction LIKE '{year}%' AND type_batiment = 'studio'")
+            query = "SELECT COUNT(*) AS nombre_acquisitions_studios FROM transactions_sample WHERE ville = ? AND date_transaction LIKE ? AND type_batiment = 'studio'"
+            res = cur.execute(query, (city, f"{year}%"))
             result = res.fetchone()
             if result is None:
                 raise HTTPException(status_code=404, detail="Pas de résultat trouvé")
@@ -84,7 +89,8 @@ async def prix_m2_moyen_maison(city: str = Query(...), year: int = Query(...)):
     try:
         with sqlite3.connect(r"chinook.db") as con:
             cur = con.cursor()
-            res = cur.execute(f"SELECT AVG(prix / surface_habitable) AS prix_m2_moyen FROM transactions_sample WHERE ville = '{city}' AND date_transaction LIKE '{year}%' AND type_batiment = 'maison'")
+            query = "SELECT AVG(prix / surface_habitable) AS prix_m2_moyen FROM transactions_sample WHERE ville = ? AND date_transaction LIKE ? AND type_batiment = 'maison'"
+            res = cur.execute(query, (city, f"{year}%"))
             result = res.fetchone()
             if result is None:
                 raise HTTPException(status_code=404, detail="Pas de résultat trouvé")
@@ -99,7 +105,8 @@ async def nb_transactions_departement():
     try:
         with sqlite3.connect(r"chinook.db") as con:
             cur = con.cursor()
-            res = cur.execute(f"SELECT departement, COUNT(*) AS nombre_transactions FROM transactions_sample GROUP BY departement ORDER BY nombre_transactions DESC")
+            query = "SELECT departement, COUNT(*) AS nombre_transactions FROM transactions_sample GROUP BY departement ORDER BY nombre_transactions DESC"
+            res = cur.execute(query)
             results = res.fetchall()
             if not results:
                 raise HTTPException(status_code=404, detail="Pas de résultat trouvé")
@@ -114,7 +121,8 @@ async def top_10_villes():
     try:
         with sqlite3.connect(r"chinook.db") as con:
             cur = con.cursor()
-            res = cur.execute(f"SELECT ville, COUNT(*) as nombre_transactions FROM transactions_sample GROUP BY ville ORDER BY nombre_transactions DESC LIMIT 10")
+            query = "SELECT ville, COUNT(*) as nombre_transactions FROM transactions_sample GROUP BY ville ORDER BY nombre_transactions DESC LIMIT 10"
+            res = cur.execute(query)
             results = res.fetchall()
             if not results:
                 raise HTTPException(status_code=404, detail="Pas de résultat trouvé")
@@ -129,12 +137,13 @@ async def nb_ventes_appart_2022():
     try:
         with sqlite3.connect(r"chinook.db") as con:
             cur = con.cursor()
-            res = cur.execute("""
+            query = """
                 SELECT COUNT(*) as nombre_ventes_appart_2022
                 FROM transactions_sample t
                 JOIN foyers_fiscaux f ON t.ville = f.ville
                 WHERE t.type_batiment = 'appartement' AND t.date_transaction LIKE '2022%' AND f.revenu_fiscal_moyen > 70000
-            """)
+            """
+            res = cur.execute(query)
             result = res.fetchone()
             if result is None:
                 raise HTTPException(status_code=404, detail="Pas de résultat trouvé")
@@ -149,13 +158,15 @@ async def top_10_villes_prix_m2_bas():
     try:
         with sqlite3.connect(r"chinook.db") as con:
             cur = con.cursor()
-            res = cur.execute("""
-                FROM transactions_sample 
-                WHERE type_batiment = 'appartement' 
-                GROUP BY ville 
-                ORDER BY prix_m2_moyen ASC 
+            query = """
+                SELECT ville, AVG(prix / surface_habitable) AS prix_m2_moyen
+                FROM transactions_sample
+                WHERE type_batiment = 'appartement'
+                GROUP BY ville
+                ORDER BY prix_m2_moyen ASC
                 LIMIT 10
-            """)
+            """
+            res = cur.execute(query)
             results = res.fetchall()
             if not results:
                 raise HTTPException(status_code=404, detail="Pas de résultat trouvé")
@@ -170,14 +181,15 @@ async def top_10_villes_prix_m2_haut():
     try:
         with sqlite3.connect(r"chinook.db") as con:
             cur = con.cursor()
-            res = cur.execute("""
-                SELECT ville, AVG(prix / surface_habitable) AS prix_m2_moyen 
-                FROM transactions_sample 
-                WHERE type_batiment = 'maison' 
-                GROUP BY ville 
-                ORDER BY prix_m2_moyen DESC 
+            query = """
+                SELECT ville, AVG(prix / surface_habitable) AS prix_m2_moyen
+                FROM transactions_sample
+                WHERE type_batiment = 'maison'
+                GROUP BY ville
+                ORDER BY prix_m2_moyen DESC
                 LIMIT 10
-            """)
+            """
+            res = cur.execute(query)
             results = res.fetchall()
             if not results:
                 raise HTTPException(status_code=404, detail="Pas de résultat trouvé")
@@ -186,7 +198,7 @@ async def top_10_villes_prix_m2_haut():
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-# Exécuter l'application avec uvicorn (uniquement si ce n'est pas charger en tant que module)
+# Exécuter l'application avec uvicorn (uniquement si ce n'est pas chargé en tant que module)
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="127.0.0.1", port=8000)
+    uvicorn.run(app, host="127.0.0.1
