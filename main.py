@@ -201,4 +201,4 @@ async def top_10_villes_prix_m2_haut():
 # Exécuter l'application avec uvicorn (uniquement si ce n'est pas chargé en tant que module)
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="127.0.0.1
+    uvicorn.run(app, host="127.0.0.1")
