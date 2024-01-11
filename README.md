@@ -1,4 +1,4 @@
-# Description du Code
+# Description du programme
 
 Ce projet est une API FastAPI qui fournit divers endpoints pour accéder et analyser des données immobilières stockées dans une base de données SQLite. Chaque endpoint répond à une user story spécifique, permettant aux utilisateurs d'obtenir des informations telles que le revenu fiscal moyen des foyers, les transactions immobilières récentes, le nombre d'acquisitions, etc.
 
@@ -15,25 +15,24 @@ Le code est organisé de la manière suivante :
 - **Exécution de l'Application :** L'application est exécutée avec uvicorn.
 
 
-Explication du code point par point
-```python
-```
+Explication du code partie endpoint:
+
 
 ```python
 @app.get("/revenu_fiscal_moyen/", description="1. Obtenir le revenu fiscal moyen des foyers d'une ville pour une année donnée.")
 ```
-
  Dans le code FastAPI, @app.get est utilisé pour définir un endpoint dans une application FastAPI.
  On indique ensuite l'url cible(relatif) et une description
+
 
 ```python
 async def revenu_fiscal_moyen(year: int = Query(...), city: str = Query(...)):
 ```
- 
  pour rappel def permet de dire qu'on va crée une fonction. Pour async: Il est utilisé pour définir des fonctions asynchrones. 
 Les fonctions asynchrones, également appelées coroutines, permettent l'exécution de plusieurs tâches de manière 
 concurrente sans bloquer le programme principal. En gros par exemple une tache qu'on veut exacuté sois même apres execution du programme
 via un click sur un bouton
+
 
 ```python
   try:
@@ -42,7 +41,6 @@ via un click sur un bouton
             res = cur.execute(f"SELECT revenu_fiscal_moyen FROM foyers_fiscaux WHERE date = {year} AND ville = '{city}'")
             result = res.fetchone()
 ```
- 
 On crée une condition pour testé si on trouve la donnée via notre requette.
 on dit avec quoi on se connecte et a quoi
 on crée le curseur 
@@ -59,19 +57,18 @@ pour éviter une utilisation excessive de la mémoire.
 
 Pour faire plus simple c'est pour dire si on veut une liste ou pas....
 
+
 ```python
 if result is None:
                 raise HTTPException(status_code=404, detail="Pas de résultat trouvé")
 ```
-
-
 si il y a pas de resultat car pas de donnée trouvé on affiche pas de résultat trouvé
-
 ```python
+
+
 else:
                 return {"revenu_fiscal_moyen": result[0]}
 ```
-
 et si non on affiche le resultat
 
 
