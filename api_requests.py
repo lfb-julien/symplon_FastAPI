@@ -1,8 +1,9 @@
 from fastapi import FastAPI, HTTPException, Query
 import sqlite3
-
+import os
+print(os.getcwd())
 app = FastAPI()
-
+chinook_db = r"ressources/data/chinook.db"
 # Utilitaire pour nettoyer les valeurs de chaînes de caractères (insensible à la casse et sans espaces superflus)
 def clean_string(value):
     return value.strip().lower()
@@ -11,7 +12,7 @@ def clean_string(value):
 @app.get("/revenu_fiscal_moyen/")
 async def revenu_fiscal_moyen(year: int = Query(...), city: str = Query(...)):
     try:
-        with sqlite3.connect("chinook.db") as con:
+        with sqlite3.connect(chinook_db) as con:
             cur = con.cursor()
             city = clean_string(city)
             query = "SELECT revenu_fiscal_moyen FROM foyers_fiscaux WHERE date = ? AND LOWER(ville) = ?"
@@ -28,10 +29,10 @@ async def revenu_fiscal_moyen(year: int = Query(...), city: str = Query(...)):
 @app.get("/top10_transaction/")
 async def top_transaction_10(city: str = Query(...)):
     try:
-        with sqlite3.connect("chinook.db") as con:
+        with sqlite3.connect(chinook_db) as con:
             cur = con.cursor()
             city = clean_string(city)
-            query = "SELECT id_transaction FROM transactions_sample WHERE LOWER(ville) = ? ORDER BY date_transaction DESC LIMIT 10"
+            query = "SELECT id_transaction FROM transactions_idf WHERE LOWER(ville) = ? ORDER BY date_transaction DESC LIMIT 10"
             res = cur.execute(query, (city,))
             results = res.fetchall()
             if not results:
@@ -45,10 +46,10 @@ async def top_transaction_10(city: str = Query(...)):
 @app.get("/nb_acquisitions_city/")
 async def nb_acquisitions_city(city: str = Query(...), year: int = Query(...)):
     try:
-        with sqlite3.connect("chinook.db") as con:
+        with sqlite3.connect(chinook_db) as con:
             cur = con.cursor()
             city = clean_string(city)
-            query = "SELECT COUNT(id_transaction) FROM transactions_sample WHERE LOWER(ville) = ? AND date_transaction LIKE ?"
+            query = "SELECT COUNT(id_transaction) FROM transactions_idf WHERE LOWER(ville) = ? AND date_transaction LIKE ?"
             res = cur.execute(query, (city, f"{year}%"))
             result = res.fetchone()
             if result is None:
@@ -62,12 +63,12 @@ async def nb_acquisitions_city(city: str = Query(...), year: int = Query(...)):
 @app.get("/repartition_appart/")
 async def repartition_appartement(year: int = Query(...), city: str = Query(...)):
     try:
-        with sqlite3.connect("chinook.db") as con:
+        with sqlite3.connect(chinook_db) as con:
             cur = con.cursor()
             city = clean_string(city)
             query = """
                 SELECT n_pieces, COUNT(*) AS nombre_appartements 
-                FROM transactions_sample 
+                FROM transactions_idf 
                 WHERE LOWER(ville) = ? AND date_transaction LIKE ? AND LOWER(type_batiment) = 'appartement' 
                 GROUP BY n_pieces
             """
@@ -84,12 +85,12 @@ async def repartition_appartement(year: int = Query(...), city: str = Query(...)
 @app.get("/acquisitions_studio/")
 async def acquisitions_studio(year: int = Query(...), city: str = Query(...)):
     try:
-        with sqlite3.connect("chinook.db") as con:
+        with sqlite3.connect(chinook_db) as con:
             cur = con.cursor()
             city = clean_string(city)
             query = """
                 SELECT COUNT(*) AS nombre_acquisitions_studios 
-                FROM transactions_sample 
+                FROM transactions_idf 
                 WHERE LOWER(ville) = ? AND date_transaction LIKE ? AND LOWER(type_batiment) = 'studio'
             """
             res = cur.execute(query, (city, f"{year}%"))
@@ -105,20 +106,20 @@ async def acquisitions_studio(year: int = Query(...), city: str = Query(...)):
 @app.get("/prix_m2_moyen_maison/")
 async def prix_m2_moyen_maison(city: str = None, year: int = Query(...)):
     try:
-        with sqlite3.connect("chinook.db") as con:
+        with sqlite3.connect(chinook_db) as con:
             cur = con.cursor()
             if city:
                 city = clean_string(city)
                 query = """
                     SELECT AVG(prix / surface_habitable) AS prix_m2_moyen 
-                    FROM transactions_sample 
+                    FROM transactions_idf 
                     WHERE LOWER(ville) = ? AND date_transaction LIKE ? AND LOWER(type_batiment) = 'maison'
                 """
                 params = (city, f"{year}%")
             else:
                 query = """
                     SELECT AVG(prix / surface_habitable) AS prix_m2_moyen 
-                    FROM transactions_sample 
+                    FROM transactions_idf 
                     WHERE date_transaction LIKE ? AND LOWER(type_batiment) = 'maison'
                 """
                 params = (f"{year}%",)
@@ -136,9 +137,9 @@ async def prix_m2_moyen_maison(city: str = None, year: int = Query(...)):
 @app.get("/nb_transactions_departement/")
 async def nb_transactions_departement():
     try:
-        with sqlite3.connect("chinook.db") as con:
+        with sqlite3.connect(chinook_db) as con:
             cur = con.cursor()
-            query = "SELECT departement, COUNT(*) AS nombre_transactions FROM transactions_sample GROUP BY departement ORDER BY nombre_transactions DESC"
+            query = "SELECT departement, COUNT(*) AS nombre_transactions FROM transactions_idf GROUP BY departement ORDER BY nombre_transactions DESC"
             res = cur.execute(query)
             results = res.fetchall()
             if not results:
@@ -152,9 +153,9 @@ async def nb_transactions_departement():
 @app.get("/top_10_villes/")
 async def top_10_villes():
     try:
-        with sqlite3.connect("chinook.db") as con:
+        with sqlite3.connect(chinook_db) as con:
             cur = con.cursor()
-            query = "SELECT ville, COUNT(*) as nombre_transactions FROM transactions_sample GROUP BY ville ORDER BY nombre_transactions DESC LIMIT 10"
+            query = "SELECT ville, COUNT(*) as nombre_transactions FROM transactions_idf GROUP BY ville ORDER BY nombre_transactions DESC LIMIT 10"
             res = cur.execute(query)
             results = res.fetchall()
             if not results:
@@ -168,11 +169,11 @@ async def top_10_villes():
 @app.get("/nb_ventes_appart_2022/")
 async def nb_ventes_appart_2022():
     try:
-        with sqlite3.connect("chinook.db") as con:
+        with sqlite3.connect(chinook_db) as con:
             cur = con.cursor()
             query = """
                 SELECT COUNT(*) as nombre_ventes_appart_2022
-                FROM transactions_sample t
+                FROM transactions_idf t
                 JOIN foyers_fiscaux f ON LOWER(t.ville) = LOWER(f.ville)
                 WHERE LOWER(t.type_batiment) = 'appartement' AND t.date_transaction LIKE '2022%' AND f.revenu_fiscal_moyen > 70000
             """
@@ -191,11 +192,11 @@ async def nb_ventes_appart_2022():
 @app.get("/top_10_villes_prix_m2_bas/", description="10. Obtenir le top 10 des villes avec un prix au m2 moyen le plus bas pour les appartements.")
 async def top_10_villes_prix_m2_bas():
     try:
-        with sqlite3.connect(r"chinook.db") as con:
+        with sqlite3.connect(chinook_db) as con:
             cur = con.cursor()
             query = """
                 SELECT TRIM(LOWER(ville)) AS ville_normalisee, AVG(prix / surface_habitable) AS prix_m2_moyen
-                FROM transactions_sample
+                FROM transactions_idf
                 WHERE LOWER(type_batiment) = 'appartement'
                 GROUP BY ville_normalisee
                 ORDER BY prix_m2_moyen ASC
@@ -214,11 +215,11 @@ async def top_10_villes_prix_m2_bas():
 @app.get("/top_10_villes_prix_m2_haut/", description="11. Obtenir le top 10 des villes avec un prix au m2 moyen le plus haut pour les maisons.")
 async def top_10_villes_prix_m2_haut():
     try:
-        with sqlite3.connect(r"chinook.db") as con:
+        with sqlite3.connect(chinook_db) as con:
             cur = con.cursor()
             query = """
                 SELECT TRIM(LOWER(ville)) AS ville_normalisee, AVG(prix / surface_habitable) AS prix_m2_moyen
-                FROM transactions_sample
+                FROM transactions_idf
                 WHERE LOWER(type_batiment) = 'maison'
                 GROUP BY ville_normalisee
                 ORDER BY prix_m2_moyen DESC
@@ -232,6 +233,23 @@ async def top_10_villes_prix_m2_haut():
                 return {"top_10_villes_prix_m2_haut": [{"ville": result[0].capitalize(), "prix_m2_moyen": result[1]} for result in results]}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+    
+@app.get("/villes/")
+async def get_villes():
+    try:
+        with sqlite3.connect(chinook_db) as con:
+            cur = con.cursor()
+            query = "SELECT DISTINCT LOWER(ville) FROM transactions_idf"
+            res = cur.execute(query)
+            results = res.fetchall()
+            if not results:
+                raise HTTPException(status_code=404, detail="Pas de villes trouvées dans la base de données")
+            else:
+                villes = [result[0].capitalize() for result in results]
+                return {"villes": villes}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 
 # Exécuter l'application avec uvicorn (uniquement si ce n'est pas chargé en tant que module)
 if __name__ == "__main__":
